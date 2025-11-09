@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Summary{% endblock %}
+
+{% block content %}
+<h2><i class="fas fa-chart-line me-2"></i>Admin Summary & Analytics</h2>
+
+<!-- Comprehensive Reservations Summary Table -->
+<div class="card shadow">
+    <div class="card-header bg-light">
+        <h5><i class="fas fa-table me-2"></i>Comprehensive Reservations Summary (Latest 10)</h5>
+    </div>
+    <div class="card-body">
+        {% if all_reservations %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>User ID</th>
+                            <th>Username</th>
+                            <th>Parking Lot</th>
+                            <th>Spot ID</th>
+                            <th>Vehicle</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Duration</th>
+                            <th>Money Paid</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in all_reservations %}
+                        <tr class="{{ 'table-warning' if reservation.is_active else 'table-light' }}">
+                            <td>
+                                <a href="{{ url_for('user_analytics', user_id=reservation.user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    {{ reservation.user.id }}
+                                </a>
+                            </td>
+                            <td>
+                                <strong>{{ reservation.user.username }}</strong><br>
+                                <small class="text-muted">{{ reservation.user.full_name }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ reservation.spot.lot.prime_location_name }}</strong><br>
+                                <small class="text-muted">{{ reservation.spot.lot.address[:30] }}...</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ reservation.spot.spot_number }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ reservation.vehicle_license_plate }}</strong><br>
+                                <small class="text-muted">{{ reservation.vehicle_color }}</small>
+                            </td>
+                            <td>
+                                {% set start_ist = reservation.parking_timestamp.replace(tzinfo=None) + timedelta(hours=5, minutes=30) %}
+                                <strong>{{ start_ist.strftime('%d/%m/%y') }}</strong><br>
+                                <small class="text-muted">{{ start_ist.strftime('%H:%M') }} IST</small>
+                            </td>
+                            <td>
+                                {% if reservation.leaving_timestamp %}
+                                    {% set end_ist = reservation.leaving_timestamp.replace(tzinfo=None) + timedelta(hours=5, minutes=30) %}
+                                    <strong>{{ end_ist.strftime('%d/%m/%y') }}</strong><br>
+                                    <small class="text-muted">{{ end_ist.strftime('%H:%M') }} IST</small>
+                                {% else %}
+                                    <span class="badge bg-warning">Still Parked</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reservation.is_active %}
+                                    <span class="text-primary fw-bold">{{ reservation.get_duration_string() }}</span>
+                                {% else %}
+                                    {{ reservation.get_duration_string() }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reservation.parking_cost %}
+                                    <span class="text-success fw-bold">₹{{ reservation.parking_cost }}</span>
+                                {% elif reservation.is_active %}
+                                    {% set current_time = moment.utcnow() %}
+                                    {% set duration_hours = ((current_time - reservation.parking_timestamp).total_seconds() / 3600) %}
+                                    {% set estimated_hours = [1, duration_hours|round|int]|max %}
+                                    {% set estimated_cost = estimated_hours * reservation.spot.lot.price %}
+                                    <span class="text-warning">₹{{ estimated_cost|round(2) }} <small>(est.)</small></span>
+                                {% else %}
+                                    <span class="text-muted">₹0.00</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reservation.is_active %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-car me-1"></i>Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Completed
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Summary Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white text-center">
+                        <div class="card-body">
+                            <h4>{{ all_reservations|selectattr('is_active')|list|length }}</h4>
+                            <small>Currently Active</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white text-center">
+                        <div class="card-body">
+                            <h4>{{ all_reservations|rejectattr('is_active')|list|length }}</h4>
+                            <small>Completed</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white text-center">
+                        <div class="card-body">
+                            {% set total_revenue = all_reservations|selectattr('parking_cost')|map(attribute='parking_cost')|sum %}
+                            <h4>₹{{ total_revenue|round(2) }}</h4>
+                            <small>Total Revenue (shown)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark text-center">
+                        <div class="card-body">
+                            {% set unique_users = all_reservations|map(attribute='user.id')|list|unique|list|length %}
+                            <h4>{{ unique_users }}</h4>
+                            <small>Unique Users</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-table fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No reservation data available</h5>
+                <p class="text-muted">Reservations will appear here once users start booking parking spots.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Occupancy Chart -->
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5>Daily Occupancy by Parking Lot</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if occupancy_chart_url %}
+                    <img src="{{ occupancy_chart_url }}" class="img-fluid" alt="Occupancy Chart" style="max-width: 100%; height: auto;">
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No occupancy data available</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Revenue Chart -->
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5>Daily Revenue by Parking Lot</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if revenue_chart_url %}
+                    <img src="{{ revenue_chart_url }}" class="img-fluid" alt="Revenue Chart" style="max-width: 100%; height: auto;">
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No revenue data available</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

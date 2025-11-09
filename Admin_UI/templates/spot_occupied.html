@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Occupied Parking Spot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h4><i class="fas fa-car me-2"></i>Occupied Parking Spot Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Spot ID</label>
+                        <input type="text" class="form-control bg-light" value="{{ spot.spot_number }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Customer ID</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light" value="{{ reservation.user.id }}" readonly>
+                            <a href="{{ url_for('user_analytics', user_id=reservation.user.id) }}" 
+                               class="btn btn-outline-primary">View</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Vehicle Number</label>
+                        <input type="text" class="form-control bg-light" value="{{ reservation.vehicle_license_plate }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Vehicle Color</label>
+                        <input type="text" class="form-control bg-light" value="{{ reservation.vehicle_color }}" readonly>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Date/Time of Parking</label>
+                        <input type="text" class="form-control bg-light" 
+                               value="{{ reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Duration</label>
+                        <input type="text" class="form-control bg-light" 
+                               value="{{ reservation.get_duration_string() }}" readonly>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Current Estimated Cost</label>
+                    <input type="text" class="form-control bg-warning text-dark fw-bold" 
+                           value="₹{{ estimated_cost }} ({{ estimated_hours }} hour{{ 's' if estimated_hours != 1 else '' }} estimated)" readonly>
+                </div>
+                
+                <div class="text-center">
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

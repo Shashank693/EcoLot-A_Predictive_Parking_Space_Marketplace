@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Release Parking Spot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h4><i class="fas fa-sign-out-alt me-2"></i>Release the Parking Spot</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('confirm_release') }}">
+                    <input type="hidden" name="reservation_id" value="{{ reservation.id }}">
+                    
+                    <!-- Pre-filled Data -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Spot ID</label>
+                            <input type="text" class="form-control bg-light" value="{{ reservation.spot.spot_number }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Vehicle Number</label>
+                            <input type="text" class="form-control bg-light" value="{{ reservation.vehicle_license_plate }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Parking Time</label>
+                            {% set parking_ist = reservation.parking_timestamp.replace(tzinfo=None) + timedelta(hours=5, minutes=30) %}
+                            <input type="text" class="form-control bg-light" 
+                                   value="{{ parking_ist.strftime('%d/%m/%Y %H:%M:%S') }} IST" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Releasing Time</label>
+                            {% set current_ist = current_time + timedelta(hours=5, minutes=30) %}
+                            <input type="text" class="form-control bg-light" 
+                                   value="{{ current_ist.strftime('%d/%m/%Y %H:%M:%S') }} IST" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label">Total Cost</label>
+                            <input type="text" class="form-control bg-warning text-dark fw-bold" 
+                                   value="₹{{ total_cost }} ({{ charged_hours }} hour{{ 's' if charged_hours != 1 else '' }})" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('user_dashboard') }}" class="btn btn-secondary w-100">Cancel</a>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-danger w-100">Release</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
